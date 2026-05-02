@@ -14,7 +14,7 @@ import { defineStore } from "pinia";
 import mapboxGl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Hls from "hls.js";
-import { ArcLayer } from "@deck.gl/layers";
+import { ArcLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import axios from "axios";
 import http from "../router/axios.js";
@@ -473,6 +473,8 @@ export const useMapStore = defineStore("map", {
 			}
 			if (map_config.type === "arc") {
 				this.AddArcMapLayer(map_config, data);
+			} else if (map_config.type === "scatter") {
+				this.AddScatterplotMapLayer(map_config, data);
 			} else if (map_config.type === "voronoi") {
 				this.AddVoronoiMapLayer(map_config, data);
 			} else if (map_config.type === "isoline") {
@@ -726,6 +728,64 @@ export const useMapStore = defineStore("map", {
 				this.waitUntilReady = null;
 			}
 		},
+		// 4-2-0. Add Map Layer for Scatterplot Maps
+		AddScatterplotMapLayer(map_config, data) {
+			this.loadingLayers.push("rendering");
+			const mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
+			const paint = map_config.paint || {};
+			const fillColor = paint["scatter-color"]
+				? hexToRGB(paint["scatter-color"])
+				: { r: "ff", g: "ff", b: "ff" };
+
+			const layerConfig = {
+				id: map_config.index,
+				data: data.features,
+				getPosition: paint["scatter-height-key"]
+					? (d) => [
+							...d.geometry.coordinates,
+							(d.properties[paint["scatter-height-key"]] ?? 0) *
+								(paint["scatter-height-scale"] ?? 1),
+						]
+					: (d) => d.geometry.coordinates,
+				getFillColor: [
+					parseInt(fillColor.r, 16),
+					parseInt(fillColor.g, 16),
+					parseInt(fillColor.b, 16),
+					Math.round((paint["scatter-opacity"] ?? 0.8) * 255),
+				],
+				getRadius: paint["scatter-radius"] ?? 100,
+				radiusMinPixels: paint["scatter-radius-min-pixels"] ?? 3,
+				radiusMaxPixels: paint["scatter-radius-max-pixels"] ?? 30,
+				stroked: paint["scatter-stroke"] ?? false,
+				getLineColor: paint["scatter-stroke-color"]
+					? (() => {
+							const c = hexToRGB(paint["scatter-stroke-color"]);
+							return [
+								parseInt(c.r, 16),
+								parseInt(c.g, 16),
+								parseInt(c.b, 16),
+								255,
+							];
+						})()
+					: [255, 255, 255, 255],
+				lineWidthMinPixels: 1,
+				pickable: true,
+				visible: true,
+			};
+
+			this.deckGlLayer[mapLayerId] = {
+				type: "ScatterplotLayer",
+				config: layerConfig,
+				data: data.features,
+			};
+			this.currentVisibleLayers.push(map_config.layerId);
+			this.renderDeckGLLayer();
+			this.currentLayers.push(map_config.layerId);
+			this.mapConfigs[map_config.layerId] = map_config;
+			this.loadingLayers = this.loadingLayers.filter(
+				(el) => el !== map_config.layerId,
+			);
+		},
 		// 4-2-1. Add Map Layer for Arc Maps
 		// Developed by Weeee Chill, Taipei Codefest 2024
 		AddArcMapLayer(map_config, data) {
@@ -738,14 +798,47 @@ export const useMapStore = defineStore("map", {
 			paintSettings["arc-color"] = paintSettings["arc-color"]
 				? paintSettings["arc-color"]
 				: ["#ffffff"];
+			const colors = [
+				"#F65658",
+				"#F49F36",
+				"#F5C860",
+				"#9AC17C",
+				"#4CB495",
+				"#569C9A",
+				"#60819C",
+				"#2F8AB1",
+			];
+
 			// formatted data
 			const layerConfig = {
 				id: map_config.index,
-				data: data.features,
-				getSourcePosition: (d) => d.geometry.coordinates[0],
-				getTargetPosition: (d) => d.geometry.coordinates[1],
+				data: data.features.slice(0, 2000), // for performance consideration, only render the first 1000 arcs
+				getSourcePosition: (d) => {
+					return [
+						Number(d.geometry.coordinates[0][0]),
+						Number(d.geometry.coordinates[0][1]),
+					];
+				},
+				getTargetPosition: (d) => {
+					return [
+						Number(d.geometry.coordinates[1][0]),
+						Number(d.geometry.coordinates[1][1]),
+					];
+				},
 				// color format: [r, g, b, [a]]
-				getSourceColor: () => {
+				getSourceColor: (d) => {
+					if (map_config.paint["arc-colorBy"]) {
+						const value =
+							d.properties[map_config.paint["arc-colorBy"]] - 1;
+						const color = hexToRGB(colors[value % colors.length]);
+
+						return [
+							parseInt(color.r, 16),
+							parseInt(color.g, 16),
+							parseInt(color.b, 16),
+							255 * paintSettings["arc-opacity"] || 255 * 0.5,
+						];
+					}
 					const color = hexToRGB(paintSettings["arc-color"][0]);
 					return [
 						parseInt(color.r, 16),
@@ -754,7 +847,18 @@ export const useMapStore = defineStore("map", {
 						255 * paintSettings["arc-opacity"] || 255 * 0.5,
 					];
 				},
-				getTargetColor: () => {
+				getTargetColor: (d) => {
+					if (map_config.paint["arc-colorBy"]) {
+						const value =
+							d.properties[map_config.paint["arc-colorBy"]] - 1;
+						const color = hexToRGB(colors[value % colors.length]);
+						return [
+							parseInt(color.r, 16),
+							parseInt(color.g, 16),
+							parseInt(color.b, 16),
+							255 * paintSettings["arc-opacity"] || 255 * 0.5,
+						];
+					}
 					const color = hexToRGB(
 						paintSettings["arc-color"][1] ||
 							paintSettings["arc-color"][0],
@@ -783,6 +887,7 @@ export const useMapStore = defineStore("map", {
 			// render deckgl layer
 			this.currentVisibleLayers.push(map_config.layerId);
 			this.renderDeckGLLayer();
+			console.log("rendering arc layer with config: ", map_config);
 			// end loading
 			this.currentLayers.push(map_config.layerId);
 			this.mapConfigs[map_config.layerId] = map_config;
@@ -796,15 +901,17 @@ export const useMapStore = defineStore("map", {
 			const layers = Object.keys(this.deckGlLayer).map((index) => {
 				const l = this.deckGlLayer[index];
 				switch (l.type) {
-				case "ArcLayer":
-					return new ArcLayer(l.config);
-				case "AnimatedArcLayer":
-					return new AnimatedArcLayer({
-						...l.config,
-						coef: this.step / 1000,
-					});
-				default:
-					break;
+					case "ArcLayer":
+						return new ArcLayer(l.config);
+					case "AnimatedArcLayer":
+						return new AnimatedArcLayer({
+							...l.config,
+							coef: this.step / 1000,
+						});
+					case "ScatterplotLayer":
+						return new ScatterplotLayer(l.config);
+					default:
+						break;
 				}
 			});
 			this.overlay.setProps({
@@ -1805,7 +1912,10 @@ export const useMapStore = defineStore("map", {
 		},
 		//  5. Turn on the visibility for a exisiting map layer
 		turnOnMapLayerVisibility(mapLayerId) {
-			if (mapLayerId.indexOf("-arc") !== -1) {
+			if (
+				mapLayerId.indexOf("-arc") !== -1 ||
+				mapLayerId.indexOf("-scatter") !== -1
+			) {
 				this.deckGlLayer[mapLayerId].config.visible = true;
 				this.step = 1;
 				this.currentVisibleLayers.push(mapLayerId);
@@ -1852,7 +1962,10 @@ export const useMapStore = defineStore("map", {
 				this.loadingLayers = this.loadingLayers.filter(
 					(el) => el !== mapLayerId,
 				);
-				if (mapLayerId.indexOf("-arc") !== -1) {
+				if (
+					mapLayerId.indexOf("-arc") !== -1 ||
+					mapLayerId.indexOf("-scatter") !== -1
+				) {
 					this.deckGlLayer[mapLayerId].config.visible = false;
 					this.renderDeckGLLayer();
 				} else if (this.map.getLayer(mapLayerId)) {
