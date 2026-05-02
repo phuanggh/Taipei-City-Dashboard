@@ -13,7 +13,7 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
-const { addChatData, addQueryData, saveChatLog } = chatStore;
+const { addChatData, addQueryData, saveChatLog, chatWithLLM } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData } = storeToRefs(chatStore);
 const { editDashboard } = storeToRefs(contentStore);
@@ -62,13 +62,23 @@ const qaBtnHandler = async (text, relations) => {
 	}
 };
 
-const sendBtnHandler = (text) => {
-	if (!text.trim()) return;
-	addQueryData({
-		role: "user",
-		content: text,
-	});
+const isSending = ref(false);
+
+const sendBtnHandler = async (text) => {
+	if (!text.trim() || isSending.value) return;
+	isSending.value = true;
 	userMessage.value = "";
+	try {
+		// if (user.value?.user_id) {
+		// 	// 已登入：走 TWCC LLM（支援多輪對話 + 工具呼叫）
+			await chatWithLLM(text);
+		// } else {
+			// 未登入：走向量語意搜尋
+			// await addQueryData({ role: "user", content: text });
+		// }
+	} finally {
+		isSending.value = false;
+	}
 };
 
 const toggleSticky = () => {
@@ -133,10 +143,10 @@ watch(
           </div>
           <div class="content">
             <div
-              v-if="chat.content"
+              v-if="chat.content || chat.isStreaming"
               class="message--bubble"
             >
-              <p>{{ chat.content }}</p>
+              <p>{{ chat.content }}<span v-if="chat.isStreaming" class="streaming-cursor">▍</span></p>
             </div>
             <!-- 表格區 -->
             <div
@@ -213,9 +223,10 @@ watch(
         v-model="userMessage"
         type="text"
         placeholder="輸入訊息..."
+        :disabled="isSending"
         @keyup.enter="sendBtnHandler(userMessage)"
       >
-      <button @click="sendBtnHandler(userMessage)">
+      <button :disabled="isSending" @click="sendBtnHandler(userMessage)">
         <SendIcon />
       </button>
     </div>
@@ -451,6 +462,11 @@ $radius-20: 20px;
 			border: none;
 			outline: none;
 			color: black;
+
+			&:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
 		}
 
 		button {
@@ -465,7 +481,24 @@ $radius-20: 20px;
 			&:hover {
 				filter: brightness(0.5);
 			}
+
+			&:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
 		}
+	}
+
+	.streaming-cursor {
+		display: inline-block;
+		animation: blink 0.8s step-end infinite;
+		color: $white;
+		margin-left: 2px;
+	}
+
+	@keyframes blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
 	}
 }
 </style>

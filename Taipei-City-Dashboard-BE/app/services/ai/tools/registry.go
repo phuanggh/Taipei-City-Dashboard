@@ -14,9 +14,9 @@ type ToolFunc func(ctx context.Context, args string) (string, error)
 var registry = make(map[string]ToolFunc)
 
 func init() {
-	// Register demo tools
 	Register("get_current_time", GetCurrentTime)
 	Register("get_population_summary", GetPopulationSummary)
+	Register("search_components", SearchComponents)
 }
 
 // Register adds a tool to the registry
@@ -90,6 +90,37 @@ func GetCurrentTime(ctx context.Context, args string) (string, error) {
 		return time.Now().Format(time.RFC3339), nil
 	}
 	return time.Now().In(loc).Format("2006-01-02 15:04:05"), nil
+}
+
+// SearchComponents queries Qdrant for dashboard components semantically similar to the given query.
+func SearchComponents(ctx context.Context, args string) (string, error) {
+	var params struct {
+		Query string `json:"query"`
+		Limit int    `json:"limit"`
+	}
+	if err := parseArgs(args, &params); err != nil {
+		return "", fmt.Errorf("invalid arguments: %v", err)
+	}
+	if params.Query == "" {
+		return "", fmt.Errorf("query is required")
+	}
+	if params.Limit <= 0 {
+		params.Limit = 5
+	}
+
+	results, err := models.GetComponentByQueryVector(params.Query, params.Limit, 0.75)
+	if err != nil {
+		return "", fmt.Errorf("vector search failed: %v", err)
+	}
+	if len(results) == 0 {
+		return "沒有找到與此主題相關的組件。", nil
+	}
+
+	out, err := json.Marshal(results)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize results: %v", err)
+	}
+	return string(out), nil
 }
 
 // Helper to parse JSON arguments if needed in future tools
