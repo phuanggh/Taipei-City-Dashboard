@@ -25,12 +25,14 @@ export const useChatStore = defineStore('chat', () => {
 	// 同一個 session 內的對話歷史（提供給 LLM 做多輪對話）
 	const llmHistory = ref(JSON.parse(sessionStorage.getItem('llmHistory')) || []);
 
-	// 本次 session ID
-	const sessionID = sessionStorage.getItem('llmSessionID') || (() => {
+	const createSessionID = () => {
 		const id = 'session_' + Date.now();
 		sessionStorage.setItem('llmSessionID', id);
 		return id;
-	})();
+	};
+
+	// 本次 session ID
+	let sessionID = sessionStorage.getItem('llmSessionID') || createSessionID();
 
   	// 監聽 chatData 的變化，自動同步到 sessionStorage
   	watch(
@@ -54,32 +56,99 @@ export const useChatStore = defineStore('chat', () => {
     	chatData.value.push({ id: chatData.value.length + 1, isDefault: false, ...newChatData });
   	};
 
-	// LLM 工具定義：search_components
-	const TOOLS = [{
-		type: 'function',
-		function: {
-			name: 'search_components',
-			description: '搜尋臺北城市儀表板中與主題相關的組件清單，當使用者想找組件、查詢特定主題的資料視覺化時使用。',
-			parameters: {
-				type: 'object',
-				properties: {
-					query: { type: 'string', description: '搜尋關鍵字或主題描述，例如「空氣品質」、「交通事故」' },
-					limit: { type: 'integer', description: '回傳組件數量上限，預設 5，最多 10' }
-				},
-				required: ['query']
+	const clearChatHistory = () => {
+		chatData.value = [...defaultChatData];
+		llmHistory.value = [];
+		sessionStorage.setItem('chatData', JSON.stringify([]));
+		sessionStorage.setItem('llmHistory', JSON.stringify([]));
+		sessionID = createSessionID();
+	};
+
+	// LLM 工具定義：需與後端 registry.go 註冊的 tool name 對齊
+	const TOOLS = [
+		{
+			type: 'function',
+			function: {
+				name: 'search_components',
+				description: '搜尋臺北城市儀表板中與主題相關的組件清單，當使用者想找組件、查詢特定主題的資料視覺化時使用。',
+				parameters: {
+					type: 'object',
+					properties: {
+						query: { type: 'string', description: '搜尋關鍵字或主題描述，例如「空氣品質」、「交通事故」' },
+						limit: { type: 'integer', description: '回傳組件數量上限，預設 5，最多 10' }
+					},
+					required: ['query']
+				}
+			}
+		},
+		{
+			type: 'function',
+			function: {
+				name: 'get_current_time',
+				description: '取得目前臺北時區的日期與時間。當使用者詢問現在時間、今天日期或需要即時時間基準時使用。',
+				parameters: {
+					type: 'object',
+					properties: {}
+				}
+			}
+		},
+		{
+			type: 'function',
+			function: {
+				name: 'get_population_summary',
+				description: '查詢臺北市或新北市指定年份的人口年齡結構概況，包含幼年、青壯年、老年與總人口。',
+				parameters: {
+					type: 'object',
+					properties: {
+						city: {
+							type: 'string',
+							enum: ['taipei', 'new_taipei'],
+							description: '查詢城市。taipei 代表臺北市，new_taipei 代表新北市。未指定或無法判斷時預設臺北市。'
+						},
+						year: {
+							type: 'integer',
+							description: '查詢年份，例如 2023、2024。'
+						}
+					},
+					required: ['year']
+				}
+			}
+		},
+		{
+			type: 'function',
+			function: {
+				name: 'get_traffic_accident_stats_by_district',
+				description: '查詢臺北市、新北市或雙北的交通事故統計資料，從 poi_tpntp 依 countyname 與 townname 計算各行政區資料筆數。當使用者詢問交通事故統計、事故資料分布、各區事故筆數時使用。若使用者未指定縣市，預設查詢雙北。',
+				parameters: {
+					type: 'object',
+					properties: {
+						city: {
+							type: 'string',
+							enum: ['taipei', 'new_taipei', 'both'],
+							description: '查詢範圍。taipei 代表臺北市，new_taipei 代表新北市，both 代表雙北。未指定時使用 both。'
+						}
+					}
+				}
 			}
 		}
-	}];
+	];
 
 	const SYSTEM_PROMPT = `你是「臺北城市儀表板」的 AI 小幫手。
-你可以：
-1. 協助使用者尋找儀表板組件（請呼叫 search_components 工具）
-2. 回答與臺北城市數據、組件功能相關的問題
+	你可以：
+	1. 協助使用者尋找儀表板組件（請呼叫 search_components 工具）
+	2. 查詢臺北目前日期時間（請呼叫 get_current_time 工具）
+	3. 查詢臺北市或新北市人口結構概況（請呼叫 get_population_summary 工具）
+	4. 查詢臺北市、新北市或雙北交通事故統計資料（請呼叫 get_traffic_accident_stats_by_district 工具）
+	5. 回答與臺北市、新北市城市數據、組件功能相關的問題
+	6. 回答任何和臺北市、新北市相關的問題
 
-規則：
-- 使用者若詢問要找哪些組件、哪些資料，請呼叫 search_components
-- 回應請使用繁體中文
-- 回應請簡潔清楚`;
+	規則：
+	- 使用者若詢問要找哪些組件、哪些資料，請呼叫 search_components
+	- 使用者若詢問現在時間、今天日期，請呼叫 get_current_time
+	- 使用者若詢問臺北市或新北市特定年份的人口、幼年人口、青壯年人口、老年人口或人口結構，請呼叫 get_population_summary
+	- 使用者若詢問臺北市、新北市或雙北發生交通事故的統計資料、各區事故資料筆數或事故分布，請呼叫 get_traffic_accident_stats_by_district；若使用者沒有指定縣市，city 使用 both；若指定臺北市，city 使用 taipei；若指定新北市，city 使用 new_taipei
+	- 回應請使用繁體中文
+	- 回應請簡潔清楚`;
 
 	// 呼叫 TWCC LLM（串流），登入後使用
 	const chatWithLLM = async (userText) => {
@@ -127,9 +196,13 @@ export const useChatStore = defineStore('chat', () => {
 			const decoder = new TextDecoder();
 			const botMsg = chatData.value.find(m => m.id === botMsgId);
 
-			while (true) {
+			let isReading = true;
+			while (isReading) {
 				const { done, value } = await reader.read();
-				if (done) break;
+				if (done) {
+					isReading = false;
+					break;
+				}
 
 				const raw = decoder.decode(value, { stream: true });
 				for (const line of raw.split('\n')) {
@@ -144,7 +217,7 @@ export const useChatStore = defineStore('chat', () => {
 							botMsg.content += token;
 							fullContent += token;
 						}
-					} catch (_) { /* 略過非 JSON 行 */ }
+					} catch { /* 略過非 JSON 行 */ }
 				}
 			}
 		} catch (err) {
@@ -245,5 +318,5 @@ export const useChatStore = defineStore('chat', () => {
       	}
 	};
 
-	return { chatData, addChatData, addQueryData, saveChatLog, chatWithLLM }
+	return { chatData, addChatData, addQueryData, saveChatLog, chatWithLLM, clearChatHistory }
 })

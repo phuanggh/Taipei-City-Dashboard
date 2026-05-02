@@ -13,7 +13,7 @@ import http from "../../router/axios";
 const chatStore = useChatStore();
 const contentStore = useContentStore();
 const authStore = useAuthStore();
-const { addChatData, addQueryData, saveChatLog, chatWithLLM } = chatStore;
+const { addChatData, saveChatLog, chatWithLLM, clearChatHistory } = chatStore;
 const { createDashboard } = contentStore;
 const { chatData } = storeToRefs(chatStore);
 const { editDashboard } = storeToRefs(contentStore);
@@ -75,7 +75,7 @@ const sendBtnHandler = async (text) => {
 		// } else {
 			// 未登入：走向量語意搜尋
 			// await addQueryData({ role: "user", content: text });
-		// }
+		// }	
 	} finally {
 		isSending.value = false;
 	}
@@ -146,7 +146,12 @@ watch(
               v-if="chat.content || chat.isStreaming"
               class="message--bubble"
             >
-              <p>{{ chat.content }}<span v-if="chat.isStreaming" class="streaming-cursor">▍</span></p>
+              <p>
+                {{ chat.content }}<span
+                  v-if="chat.isStreaming"
+                  class="streaming-cursor"
+                >▍</span>
+              </p>
             </div>
             <!-- 表格區 -->
             <div
@@ -202,7 +207,15 @@ watch(
           v-else
           class="user"
         >
-          <div class="avatar">
+          <div
+            class="avatar user-avatar"
+            role="button"
+            title="雙擊清除聊天紀錄"
+            tabindex="0"
+            @dblclick="clearChatHistory"
+            @keyup.enter="clearChatHistory"
+            @keyup.space="clearChatHistory"
+          >
             <UserLogo />
           </div>
           <div
@@ -226,7 +239,10 @@ watch(
         :disabled="isSending"
         @keyup.enter="sendBtnHandler(userMessage)"
       >
-      <button :disabled="isSending" @click="sendBtnHandler(userMessage)">
+      <button
+        :disabled="isSending"
+        @click="sendBtnHandler(userMessage)"
+      >
         <SendIcon />
       </button>
     </div>
@@ -364,6 +380,10 @@ $radius-20: 20px;
 						width: 100%;
 						height: auto;
 					}
+				}
+
+				.user-avatar {
+					cursor: pointer;
 				}
 
 				.content {
