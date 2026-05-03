@@ -2559,7 +2559,10 @@ export const useMapStore = defineStore("map", {
 			}
 			map_configs.map((map_config) => {
 				let mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
-				if (map_config && map_config.type === "arc") {
+				if (
+					map_config &&
+					(map_config.type === "arc" || map_config.type === "scatter")
+				) {
 					this.deckGlLayer[mapLayerId].config.data =
 						this.deckGlLayer[mapLayerId].data;
 					this.renderDeckGLLayer();
