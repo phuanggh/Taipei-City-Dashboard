@@ -795,7 +795,6 @@ youbike_availability	{#9DC56E,#356340,#9DC56E}	{GuageChart,BarPercentChart}	輛
 ebus_percent	{#9DC56E,#356340,#9DC56E}	{IconPercentChart,BarPercentChart}	輛
 city_age_distribution	{#24B0DD,#56B96D,#F8CF58,#F5AD4A,#E170A6,#ED6A45,#AF4137,#10294A}	{DistrictChart,ColumnChart}	仟人
 dependency_aging	{#67baca,#fbf3ac}	{ColumnLineChart,TimelineSeparateChart}	%
-aging_kpi	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{TextUnitChart}	\N
 aging_workforce_trend	{#24B0DD,#56B96D,#F8CF58,#F5AD4A,#E170A6,#ED6A45,#AF4137,#10294A}	{BarPercentChart,RadarChart,ColumnChart}	%
 bike_network	{#a0b8e8,#b7ff98}	{DonutChart,BarChart}	公里
 bike_map	{#a0b8e8,#b7ff98}	{MapLegend}	條
@@ -803,12 +802,14 @@ hazard_water	{#9DC56E,#356340,#9DC56E}	{GuageChart,BarPercentChart}	輛
 narrow_alley	{#9DC56E,#356340,#9DC56E}	{GuageChart,BarPercentChart}	輛
 emergency	{#9DC56E,#356340,#9DC56E}	{GuageChart,BarPercentChart}	輛
 cctv	{#9DC56E,#356340,#9DC56E}	{GuageChart,BarPercentChart}	輛
-poi	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{BarChart}	\N
-accident	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{BarChart}	\N
-stop	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	\N
-maiin_score	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{HeatmapChart}	\N
-main_score	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{HeatmapChart}	\N
-bus	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	\N
+accident	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{BarChart}	
+aging_kpi	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{TextUnitChart}	
+bus	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	
+poi	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{BarChart}	
+stop	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	
+maiin_score	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	
+main_score	{#F65658,#F49F36,#F5C860,#9AC17C,#4CB495,#569C9A,#60819C,#2F8AB1}	{MapLegend}	
+main_contour	{#e4f1e1,#b4d9cc,#89c0b6,#63a6a0,#448c8a}	{MapLegend}	
 \.
 
 
@@ -835,6 +836,7 @@ COPY public.component_maps (id, index, title, type, source, size, icon, paint, p
 615	wee_emergency_agg_villa	防空避難設施	fill	geojson	\N	\N	{\n  "fill-opacity": 0.5,\n  "fill-color": [\n    "interpolate",\n    [\n      "linear"\n    ],\n    [\n      "to-number",\n      [\n        "get",\n        "避難容納差額"\n      ]\n    ],\n    -5000,\n    "#8B0000",\n    0,\n    "#FF0000",\n    1000,\n    "#FF4500",\n    5000,\n    "#FFA500",\n    15000,\n    "#FFD700",\n    30000,\n    "#FFFF00",\n    50000,\n    "#ADFF2F",\n    75000,\n    "#7CFC00",\n    100000,\n    "#008000"\n  ]\n}	[\n  { "key": "COUNTY", "name": "縣市" },\n  { "key": "TOWN", "name": "鄉鎮市區" },\n  { "key": "VILLAGE", "name": "里" },\n  { "key": "A0A14_CNT", "name": "0-14歲人口數" },\n  { "key": "A15A64_CNT", "name": "15-64歲人口數" },\n  { "key": "A65UP_CNT", "name": "65歲以上人口數" },\n  { "key": "POP_CNT", "name": "總人口數" },\n  { "key": "可容納人數", "name": "避難可容納人數" },\n  { "key": "避難容納差額", "name": "避難容納差額" },\n  { "key": "geo_iid", "name": "地理識別碼" }\n]\n
 631	wee_hazard_water	淹水模擬	fill-extrusion	geojson	\N	\N	{\n  "fill-extrusion-color": [\n    "match",\n    [\n      "get",\n      "type"\n    ],\n    "0.3-0.5",\n    "#0072E3",\n    "0.5-1",\n    "#66B3FF",\n    "1-2",\n    "#80FFFF",\n    "2-3",\n    "#4EFEB3",\n    ">3",\n    "#4F9D9D",\n    "#ccc"\n  ],\n  "fill-extrusion-opacity": 1,\n  "fill-extrusion-height": [\n    "match",\n    [\n      "get",\n      "hazard_class"\n    ],\n    "6h150r",\n    150,\n    "6h250r",\n    250,\n    "6h350r",\n    350,\n    "12h200r",\n    200,\n    "12h300r",\n    300,\n    "12h400r",\n    400,\n    "24h200r",\n    200,\n    "24h350r",\n    350,\n    "24h500r",\n    500,\n    "24h650r",\n    650,\n    0\n  ]\n}	[\r\n  {"key": "data_time", "name": "數據時間"},\r\n  {"key": "route_name", "name": "路線名稱"},\r\n  {"key": "city_code", "name": "城市代碼"},\r\n  {"key": "city", "name": "城市"},\r\n  {"key": "road_section_start", "name": "起點路段"},\r\n  {"key": "road_section_end", "name": "終點路段"},\r\n  {"key": "direction", "name": "方向"},\r\n  {"key": "cycling_length", "name": "自行車道長度"},\r\n  {"key": "finished_time", "name": "完工時間"},\r\n  {"key": "update_time", "name": "更新時間"}\r\n]
 641	wee_cctv	淹水模擬cctv	circle	geojson	\N	\N	{\n  "circle-opacity": 1,\n  "circle-color": "#ffd60a",\n  "circle-radius": 3\n}	[\n  { "key": "year", "name": "設置年份" },\n  { "key": "COUNTY", "name": "縣市" },\n  { "key": "TOWN", "name": "行政區" },\n  { "key": "url_link", "name": "即時影像 API 連結" },\n  { "key": "url_gmap", "name": "Google 地圖連結" }\n]
+10	main_score_tp	main_score	scatter	geojson	\N	\N	{\n  "scatter-color": "#FF5A5F",\n  "scatter-opacity": 1,\n  "scatter-radius": 2,\n  "scatter-radius-min-pixels": 2,\n  "scatter-radius-max-pixels": 2,\n  "scatter-stroke": false,\n  "scatter-stroke-color": "#FFFFFF",\n  "scatter-height-key": "z_score_poi",\n  "scatter-height-scale": 100,\n  "scatter-colorBy": "z_score_poi"\n}	\N
 8	stop_all	stop	circle	geojson	small	\N	{\n  "circle-opacity": 0.15,\n  "circle-radius": 5,\n  "circle-color": "#F65658",\n  "circle-stroke-width": 0\n}	\N
 5	accident_tp	accident	circle	geojson	small	\N	{\n  "circle-opacity": 0.5,\n  "circle-radius": [\n\t\t\t"match",\n\t\t\t[\n\t\t\t"get",\n\t\t\t"pedestrian"\n\t\t\t],\n\t\t\t"有行人受傷",\n\t\t\t10,\n\t\t\t"無行人受傷",\n\t\t\t3,\n\t\t\t3\n\t\t],\n  "circle-color": [\n\t\t\t"match",\n\t\t\t[\n\t\t\t"get",\n\t\t\t"pedestrian"\n\t\t\t],\n\t\t\t"有行人受傷",\n\t\t\t"#E8B25C",\n\t\t\t"無行人受傷",\n\t\t\t"#D63384",\n\t\t\t"#808080"\n\t\t],\n  "circle-stroke-width": 0\n}	[\n  {\n    "key": "location",\n    "name": "地點"\n  },\n  {\n    "key": "death_count",\n    "name": "死亡人數"\n  },\n  {\n    "key": "injury_count",\n    "name": "受傷人數"\n  }\n]
 4	accident_tpntp	accident	circle	geojson	small	\N	{\n  "circle-opacity": 0.5,\n  "circle-radius": [\n\t\t\t"match",\n\t\t\t[\n\t\t\t"get",\n\t\t\t"pedestrian"\n\t\t\t],\n\t\t\t"有行人受傷",\n\t\t\t5,\n\t\t\t"無行人受傷",\n\t\t\t2,\n\t\t\t2\n\t\t],\n  "circle-color": [\n\t\t\t"match",\n\t\t\t[\n\t\t\t"get",\n\t\t\t"pedestrian"\n\t\t\t],\n\t\t\t"有行人受傷",\n\t\t\t"#E8B25C",\n\t\t\t"無行人受傷",\n\t\t\t"#D63384",\n\t\t\t"#808080"\n\t\t],\n  "circle-stroke-width": 0\n}	[\n  {\n    "key": "location",\n    "name": "地點"\n  },\n  {\n    "key": "death_count",\n    "name": "死亡人數"\n  },\n  {\n    "key": "injury_count",\n    "name": "受傷人數"\n  }\n]
@@ -842,9 +844,10 @@ COPY public.component_maps (id, index, title, type, source, size, icon, paint, p
 2	poi_tpntp	poi	circle	geojson	small	\N	{\n  "circle-opacity": 0.5,\n  "circle-radius": 2,\n  "circle-color": [\n    "match",\n    [\n      "get",\n      "subcategory"\n    ],\n    "餐廳",\n    "#F65658",\n    "綜合餐飲",\n    "#F49F36",\n    "食品零售",\n    "#F5C860",\n    "補習班",\n    "#9AC17C",\n    "便利商店",\n    "#4CB495",\n    "咖啡",\n    "#569C9A",\n    "綜合零售",\n    "#60819C",\n    "速食",\n    "#2F8AB1",\n    "#808080"\n  ],\n  "circle-stroke-width": 0\n}	[\n  {\n    "key": "poi_name",\n    "name": "場所名稱"\n  },\n  {\n    "key": "subcategory",\n    "name": "類別"\n  }\n]
 6	bus_linestring_tp	bus	arc	geojson	\N	\N	{\n  "arc-color": [\n    "#FF5A5F",\n    "#5A8FFF"\n  ],\n  "arc-colorBy": "z_OD_overlap",\n  "arc-opacity": 0.6,\n  "arc-width": 1,\n  "arc-animate": true\n}	\N
 7	bus_linestring_tpntp	bus	arc	geojson	\N	\N	{\n  "arc-color": [\n    "#FF5A5F",\n    "#5A8FFF"\n  ],\n  "arc-colorBy": "z_OD_overlap",\n  "arc-opacity": 0.6,\n  "arc-width": 1,\n  "arc-animate": true\n}	\N
-9	main_score_tpntp	main_score	scatter	geojson	\N	\N	{\n  "scatter-color": "#FF5A5F",\n  "scatter-opacity": 1,\n  "scatter-radius": 1,\n  "scatter-radius-min-pixels": 1,\n  "scatter-radius-max-pixels": 1,\n  "scatter-stroke": false,\n  "scatter-stroke-color": "#FFFFFF",\n  "scatter-height-key": "z_score_poi",\n  "scatter-height-scale": 50,\n  "scatter-colorBy": "z_score_poi"\n}	\N
-10	main_score_tp	main_score	scatter	geojson	\N	\N	{\n  "scatter-color": "#FF5A5F",\n  "scatter-opacity": 1,\n  "scatter-radius": 1,\n  "scatter-radius-min-pixels": 1,\n  "scatter-radius-max-pixels": 1,\n  "scatter-stroke": false,\n  "scatter-stroke-color": "#FFFFFF",\n  "scatter-height-key": "z_score_poi",\n  "scatter-height-scale": 50,\n  "scatter-colorBy": "z_score_poi"\n}	\N
+9	main_score_tpntp	main_score	scatter	geojson	\N	\N	{\n  "scatter-color": "#FF5A5F",\n  "scatter-opacity": 1,\n  "scatter-radius": 2,\n  "scatter-radius-min-pixels": 2,\n  "scatter-radius-max-pixels": 2,\n  "scatter-stroke": false,\n  "scatter-stroke-color": "#FFFFFF",\n  "scatter-height-key": "z_score_poi",\n  "scatter-height-scale": 100,\n  "scatter-colorBy": "z_score_poi"\n}	\N
 1	poi_tp	poi	circle	geojson	small	\N	{\n  "circle-opacity": 0.5,\n  "circle-radius": 2,\n  "circle-color": [\n    "match",\n    [\n      "get",\n      "subcategory"\n    ],\n    "餐廳",\n    "#F65658",\n    "綜合餐飲",\n    "#F49F36",\n    "食品零售",\n    "#F5C860",\n    "補習班",\n    "#9AC17C",\n    "便利商店",\n    "#4CB495",\n    "咖啡",\n    "#569C9A",\n    "綜合零售",\n    "#60819C",\n    "速食",\n    "#2F8AB1",\n    "#808080"\n  ],\n  "circle-stroke-width": 0\n}	[\n  {\n    "key": "poi_name",\n    "name": "場所名稱"\n  },\n  {\n    "key": "subcategory",\n    "name": "類別"\n  }\n]
+12	main_contour_tpntp	main_contour	line-deckgl	geojson	\N	\N	{\n    "line-deckgl-colorBy": "z",\n    "line-deckgl-colorMap": {\n      "2.5": "#63a6a0",\n      "3.5": "#89c0b6",\n      "4.5": "#b4d9cc",\n      "5.5": "#e4f1e1"\n    },\n    "line-deckgl-opacity": 0.85,\n    "line-deckgl-width": 5,\n    "line-deckgl-width-min-pixels": 1,\n    "line-deckgl-width-max-pixels": 6,\n    "line-deckgl-height-key": "z",\n    "line-deckgl-height-scale": 100\n  }	\N
+11	main_contour_tp	main_contour	line-deckgl	geojson	\N	\N	{\n    "line-deckgl-colorBy": "z",\n    "line-deckgl-colorMap": {\n      "2.5": "#63a6a0",\n      "3.5": "#89c0b6",\n      "4.5": "#b4d9cc",\n      "5.5": "#e4f1e1"\n    },\n    "line-deckgl-opacity": 0.85,\n    "line-deckgl-width": 5,\n    "line-deckgl-width-min-pixels": 1,\n    "line-deckgl-width-max-pixels": 6,\n    "line-deckgl-height-key": "z",\n    "line-deckgl-height-scale": 100\n  }	\N
 \.
 
 
@@ -870,6 +873,7 @@ COPY public.components (id, index, name) FROM stdin;
 4	stop	雙北公車站
 5	main_score	潛在臨停熱區
 1	poi	潛在臨停地點
+6	main_contour	潛在臨停熱區(等高線)
 \.
 
 
@@ -909,7 +913,7 @@ COPY public.dashboards (id, index, name, components, icon, updated_at, created_a
 358	practical_transportation_newtpe	務實交通	{60,212,213}	directions_car	2025-03-12 08:00:38.75842+00	2024-03-21 09:38:37.66+00
 1	09a25cd9cb7d	收藏組件	\N	favorite	2025-03-14 07:34:22.247753+00	2025-03-14 07:34:22.247753+00
 360	10a0f480cd8d	收藏組件	\N	favorite	2025-05-30 07:53:56.145759+00	2025-05-30 07:53:56.145759+00
-3	2026_spring	行人地獄	{1,2,3,4,5}	\N	2026-05-02 07:34:22.247753+00	2026-05-02 07:34:22.247753+00
+3	2026_spring	行人地獄	{1,2,3,4,5,6}	\N	2026-05-02 07:34:22.247753+00	2026-05-02 07:34:22.247753+00
 100	test	Test	{63,64,61,62}	\N	2025-03-14 07:34:22.247753+00	2025-03-14 07:34:22.247753+00
 2	3245d9eace5f	我的新儀表板	{63,64,61,62}	star	2025-03-14 14:55:11.732116+00	2025-03-14 14:55:11.732116+00
 355	ltc_care_newtpe	長照關懷	{63}	elderly	2025-02-27 06:42:21.705931+00	2024-03-21 09:38:37.66+00
@@ -969,12 +973,14 @@ youbike_availability	\N	{70}	\N	current	\N	10	minute	交通局	顯示當前臺�
 poi	\N	{2}	{}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	two_d	SELECT x_axis, sum(data) AS data\nFROM (\n  SELECT subcategory AS x_axis, COUNT(*) AS data\n  FROM public.poi_tpntp\n  WHERE subcategory NOT IN ('subcategory', '麵"', '薏仁。"')\n    AND subcategory != ''\n  GROUP BY subcategory\n) d\nWHERE x_axis != ''\nGROUP BY x_axis\nORDER BY data DESC	\N	metrotaipei
 accident	\N	{5}	\N	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	two_d	SELECT x_axis, sum(data) AS data\nFROM (\n  SELECT\n    trim(unnest(string_to_array(vehicles, ';'))) AS x_axis,\n    COUNT(*) AS data\n  FROM public.accident_tp\n  WHERE vehicles IS NOT NULL AND vehicles != ''\n  GROUP BY x_axis\n) d\nWHERE x_axis != ''\nGROUP BY x_axis\nORDER BY data DESC;	\N	taipei
 poi	\N	{1}	{}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	two_d	SELECT x_axis, sum(data) AS data\nFROM (\n  SELECT subcategory AS x_axis, COUNT(*) AS data\n  FROM public.poi_tp\n  WHERE subcategory NOT IN ('subcategory', '麵"', '薏仁。"')\n    AND subcategory != ''\n  GROUP BY subcategory\n) d\nWHERE x_axis != ''\nGROUP BY x_axis\nORDER BY data DESC	\N	taipei
-main_score	\N	{9}	\N	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	three_d	SELECT x_axis, y_axis, x_axis AS data\nFROM generate_series(1, 8) AS scores(x_axis)\nCROSS JOIN (VALUES ('潛在臨停地點'), ('公車路線重疊度'), ('事故發生')) AS cols(y_axis)\nORDER BY x_axis, y_axis;	\N	metrotaipei
-main_score	\N	{10}	\N	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	three_d	SELECT x_axis, y_axis, x_axis AS data\nFROM generate_series(1, 8) AS scores(x_axis)\nCROSS JOIN (VALUES ('潛在臨停地點'), ('公車路線重疊度'), ('事故發生')) AS cols(y_axis)\nORDER BY x_axis, y_axis;	\N	taipei
 bus	\N	{7}	{\n  "mode": "byParam",\n  "byParam": {\n    "xParam": "z_OD_overlap"\n  }\n}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[8,7,6,5,4,3,2,1]) as name, 'line' as type	\N	metrotaipei
 stop	\N	{8}	\N	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array['公車站']) as name, 'line' as type	\N	metrotaipei
 bus	\N	{6}	{\n  "mode": "byParam",\n  "byParam": {\n    "xParam": "z_OD_overlap"\n  }\n}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[8,7,6,5,4,3,2,1]) as name, 'line' as type	\N	taipei
 accident	\N	{4}	\N	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	two_d	SELECT x_axis, sum(data) AS data\nFROM (\n  SELECT\n    trim(unnest(string_to_array(vehicles, ';'))) AS x_axis,\n    COUNT(*) AS data\n  FROM public.accident_tpntp\n  WHERE vehicles IS NOT NULL AND vehicles != ''\n  GROUP BY x_axis\n) d\nWHERE x_axis != ''\nGROUP BY x_axis\nORDER BY data DESC;	\N	metrotaipei
+main_contour	\N	{12}	{"mode":"byParam","byParam":{"xParam":"z"}}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[5,4,3,2,1]) as name, 'line' as type	\N	metrotaipei
+main_contour	\N	{11}	{"mode":"byParam","byParam":{"xParam":"z"}}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[5,4,3,2,1]) as name, 'line' as type	\N	taipei
+main_score	\N	{9}	{"mode":"byParam","byParam":{"xParam":"z_score_poi"}}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[6,5,4,3,2,1]) as name, 'line' as type	\N	metrotaipei
+main_score	\N	{10}	{"mode":"byParam","byParam":{"xParam":"z_score_poi"}}	static	\N	\N	\N	\N	\N	\N	\N	\N	\N	2023-12-20 05:56:00+00	2023-12-20 05:56:00+00	map_legend	SELECT unnest(array[6,5,4,3,2,1]) as name, 'line' as type	\N	taipei
 \.
 
 
