@@ -837,7 +837,7 @@ export const useMapStore = defineStore("map", {
 			// formatted data
 			const layerConfig = {
 				id: map_config.index,
-				data: data.features.slice(0, 2000), // for performance consideration, only render the first 1000 arcs
+				data: data.features, // for performance consideration, only render the first 1000 arcs
 				getSourcePosition: (d) => {
 					return [
 						Number(d.geometry.coordinates[0][0]),
@@ -912,7 +912,6 @@ export const useMapStore = defineStore("map", {
 			// render deckgl layer
 			this.currentVisibleLayers.push(map_config.layerId);
 			this.renderDeckGLLayer();
-			console.log("rendering arc layer with config: ", map_config);
 			// end loading
 			this.currentLayers.push(map_config.layerId);
 			this.mapConfigs[map_config.layerId] = map_config;
@@ -934,7 +933,6 @@ export const useMapStore = defineStore("map", {
 							coef: this.step / 1000,
 						});
 					case "ScatterplotLayer":
-						console.log(l.config);
 						return new ScatterplotLayer(l.config);
 					default:
 						break;
@@ -2460,7 +2458,10 @@ export const useMapStore = defineStore("map", {
 			}
 			map_configs.map((map_config) => {
 				let mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
-				if (map_config && map_config.type === "arc") {
+				if (
+					map_config &&
+					(map_config.type === "arc" || map_config.type === "scatter")
+				) {
 					this.deckGlLayer[mapLayerId].config.data = this.deckGlLayer[
 						mapLayerId
 					].data.filter((d) => {
@@ -2482,9 +2483,12 @@ export const useMapStore = defineStore("map", {
 								yParam
 							);
 						} else if (map_filter.byParam.xParam && xParam) {
+							const x =
+								map_config.type === "scatter"
+									? Number(xParam)
+									: xParam;
 							return (
-								d.properties[map_filter.byParam.xParam] ===
-								xParam
+								d.properties[map_filter.byParam.xParam] === x
 							);
 						}
 					});
