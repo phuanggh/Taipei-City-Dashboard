@@ -486,7 +486,7 @@ export const useMapStore = defineStore("map", {
 		// 3-2. Add a raster map as a source in mapbox
 		async addRasterSource(map_config) {
 			if (
-				["arc", "voronoi", "isoline", "symbol-3d"].includes(
+				["arc", "voronoi", "isoline", "symbol-3d", "scatter"].includes(
 					map_config.type,
 				)
 			) {
@@ -515,7 +515,10 @@ export const useMapStore = defineStore("map", {
 					);
 				}
 
-				if (map_config.type === "arc") {
+				if (
+					map_config.type === "arc" ||
+					map_config.type === "scatter"
+				) {
 					this.map.addSource(`${map_config.layerId}-source`, {
 						type: "geojson",
 						data: { ...res.data },
@@ -738,8 +741,8 @@ export const useMapStore = defineStore("map", {
 				: { r: "ff", g: "ff", b: "ff" };
 
 			const colors = [
-				"#2F8AB1",
-				"#60819C",
+				// "#2F8AB1",
+				// "#60819C",
 				"#569C9A",
 				"#4CB495",
 				"#9AC17C",
