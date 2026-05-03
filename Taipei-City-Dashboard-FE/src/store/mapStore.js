@@ -14,7 +14,7 @@ import { defineStore } from "pinia";
 import mapboxGl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Hls from "hls.js";
-import { ArcLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { ArcLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import axios from "axios";
 import http from "../router/axios.js";
@@ -475,6 +475,8 @@ export const useMapStore = defineStore("map", {
 				this.AddArcMapLayer(map_config, data);
 			} else if (map_config.type === "scatter") {
 				this.AddScatterplotMapLayer(map_config, data);
+			} else if (map_config.type === "line-deckgl") {
+				this.AddLineMapLayer(map_config, data);
 			} else if (map_config.type === "voronoi") {
 				this.AddVoronoiMapLayer(map_config, data);
 			} else if (map_config.type === "isoline") {
@@ -486,9 +488,14 @@ export const useMapStore = defineStore("map", {
 		// 3-2. Add a raster map as a source in mapbox
 		async addRasterSource(map_config) {
 			if (
-				["arc", "voronoi", "isoline", "symbol-3d", "scatter"].includes(
-					map_config.type,
-				)
+				[
+					"arc",
+					"voronoi",
+					"isoline",
+					"symbol-3d",
+					"scatter",
+					"line-deckgl",
+				].includes(map_config.type)
 			) {
 				let res = {};
 				let res2 = {};
@@ -515,15 +522,24 @@ export const useMapStore = defineStore("map", {
 					);
 				}
 
-				if (
-					map_config.type === "arc" ||
-					map_config.type === "scatter"
-				) {
+				if (map_config.type === "arc") {
 					this.map.addSource(`${map_config.layerId}-source`, {
 						type: "geojson",
 						data: { ...res.data },
 					});
 					this.AddArcMapLayer(map_config, res.data);
+				} else if (map_config.type === "line-deckgl") {
+					this.map.addSource(`${map_config.layerId}-source`, {
+						type: "geojson",
+						data: { ...res.data },
+					});
+					this.AddLineMapLayer(map_config, res.data);
+				} else if (map_config.type === "scatter") {
+					this.map.addSource(`${map_config.layerId}-source`, {
+						type: "geojson",
+						data: { ...res.data },
+					});
+					this.AddScatterplotMapLayer(map_config, res.data);
 				} else if (map_config.type === "voronoi") {
 					this.AddVoronoiMapLayer(map_config, res.data);
 				} else if (map_config.type === "isoline") {
@@ -814,7 +830,117 @@ export const useMapStore = defineStore("map", {
 				(el) => el !== map_config.layerId,
 			);
 		},
-		// 4-2-1. Add Map Layer for Arc Maps
+		// 4-2-1. Add Map Layer for Line Maps (DeckGL LineLayer)
+		AddLineMapLayer(map_config, data) {
+			this.loadingLayers.push("rendering");
+			console.log("123");
+			const mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
+			const paint = map_config.paint || {};
+			const lineColor = paint["line-deckgl-color"]
+				? hexToRGB(paint["line-deckgl-color"])
+				: { r: "ff", g: "ff", b: "ff" };
+			const alpha = Math.round(
+				(paint["line-deckgl-opacity"] ?? 0.8) * 255,
+			);
+
+			const colors = [
+				"#569C9A",
+				"#4CB495",
+				"#9AC17C",
+				"#F5C860",
+				"#F49F36",
+				"#F65658",
+			];
+
+			const colorMap = paint["line-deckgl-colorMap"] || null;
+
+			const resolveColor = (d) => {
+				if (colorMap) {
+					const key = String(
+						d.properties[paint["line-deckgl-colorBy"] || "z"],
+					);
+					const hex = colorMap[key];
+					if (hex) {
+						const c = hexToRGB(hex);
+						return [
+							parseInt(c.r, 16),
+							parseInt(c.g, 16),
+							parseInt(c.b, 16),
+							alpha,
+						];
+					}
+				}
+				if (paint["line-deckgl-colorBy"]) {
+					const value =
+						d.properties[paint["line-deckgl-colorBy"]] - 1;
+					const color = hexToRGB(colors[value % colors.length]);
+					return [
+						parseInt(color.r, 16),
+						parseInt(color.g, 16),
+						parseInt(color.b, 16),
+						alpha,
+					];
+				}
+				return [
+					parseInt(lineColor.r, 16),
+					parseInt(lineColor.g, 16),
+					parseInt(lineColor.b, 16),
+					alpha,
+				];
+			};
+
+			const heightKey = paint["line-deckgl-height-key"];
+			const heightScale = paint["line-deckgl-height-scale"] ?? 1;
+
+			// Explode MultiLineString into individual features so PathLayer
+			// renders each sub-path correctly without spurious connecting lines.
+			const flatFeatures = data.features.flatMap((f) => {
+				if (f.geometry.type === "MultiLineString") {
+					return f.geometry.coordinates.map((coords) => ({
+						...f,
+						geometry: { type: "LineString", coordinates: coords },
+					}));
+				}
+				return [f];
+			});
+
+			const layerConfig = {
+				id: map_config.index,
+				data: flatFeatures,
+				getPath: (d) => {
+					if (heightKey) {
+						return d.geometry.coordinates.map((pt) => [
+							pt[0],
+							pt[1],
+							(d.properties[heightKey] ?? 0) * heightScale,
+						]);
+					}
+					return d.geometry.coordinates;
+				},
+				getColor: resolveColor,
+				getWidth: paint["line-deckgl-width"] ?? 2,
+				widthMinPixels: paint["line-deckgl-width-min-pixels"] ?? 1,
+				widthMaxPixels: paint["line-deckgl-width-max-pixels"] ?? 10,
+				capRounded: true,
+				jointRounded: true,
+				pickable: true,
+				visible: true,
+			};
+
+			this.deckGlLayer[mapLayerId] = {
+				type: "PathLayer",
+				config: layerConfig,
+				data: flatFeatures,
+			};
+			this.currentVisibleLayers.push(map_config.layerId);
+			this.renderDeckGLLayer();
+			this.currentLayers.push(map_config.layerId);
+			this.mapConfigs[map_config.layerId] = map_config;
+			this.loadingLayers = this.loadingLayers.filter(
+				(el) => el !== map_config.layerId,
+			);
+		},
+		// 4-2-2. Add Map Layer for Arc Maps
 		// Developed by Weeee Chill, Taipei Codefest 2024
 		AddArcMapLayer(map_config, data) {
 			// start loading
@@ -937,6 +1063,8 @@ export const useMapStore = defineStore("map", {
 						});
 					case "ScatterplotLayer":
 						return new ScatterplotLayer(l.config);
+					case "PathLayer":
+						return new PathLayer(l.config);
 					default:
 						break;
 				}
@@ -1941,7 +2069,8 @@ export const useMapStore = defineStore("map", {
 		turnOnMapLayerVisibility(mapLayerId) {
 			if (
 				mapLayerId.indexOf("-arc") !== -1 ||
-				mapLayerId.indexOf("-scatter") !== -1
+				mapLayerId.indexOf("-scatter") !== -1 ||
+				mapLayerId.indexOf("-line-deckgl") !== -1
 			) {
 				this.deckGlLayer[mapLayerId].config.visible = true;
 				this.step = 1;
@@ -1991,7 +2120,8 @@ export const useMapStore = defineStore("map", {
 				);
 				if (
 					mapLayerId.indexOf("-arc") !== -1 ||
-					mapLayerId.indexOf("-scatter") !== -1
+					mapLayerId.indexOf("-scatter") !== -1 ||
+					mapLayerId.indexOf("-line-deckgl") !== -1
 				) {
 					this.deckGlLayer[mapLayerId].config.visible = false;
 					this.renderDeckGLLayer();
@@ -2055,7 +2185,9 @@ export const useMapStore = defineStore("map", {
 			// Gets the info that is contained in the coordinates that the user clicked on (only visible layers)
 			const clickFeatureDatas = this.map.queryRenderedFeatures(bbox, {
 				layers: this.currentVisibleLayers.filter(
-					(layer) => layer.indexOf("-arc") === -1,
+					(layer) =>
+						layer.indexOf("-arc") === -1 &&
+						layer.indexOf("-line-deckgl") === -1,
 				),
 			});
 
@@ -2463,7 +2595,9 @@ export const useMapStore = defineStore("map", {
 				let mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
 				if (
 					map_config &&
-					(map_config.type === "arc" || map_config.type === "scatter")
+					(map_config.type === "arc" ||
+						map_config.type === "scatter" ||
+						map_config.type === "line-deckgl")
 				) {
 					this.deckGlLayer[mapLayerId].config.data = this.deckGlLayer[
 						mapLayerId
@@ -2487,7 +2621,8 @@ export const useMapStore = defineStore("map", {
 							);
 						} else if (map_filter.byParam.xParam && xParam) {
 							const x =
-								map_config.type === "scatter"
+								map_config.type === "scatter" ||
+								map_config.type === "arc"
 									? Number(xParam)
 									: xParam;
 							return (
@@ -2564,7 +2699,9 @@ export const useMapStore = defineStore("map", {
 				let mapLayerId = `${map_config.index}-${map_config.type}-${map_config.city}`;
 				if (
 					map_config &&
-					(map_config.type === "arc" || map_config.type === "scatter")
+					(map_config.type === "arc" ||
+						map_config.type === "scatter" ||
+						map_config.type === "line-deckgl")
 				) {
 					this.deckGlLayer[mapLayerId].config.data =
 						this.deckGlLayer[mapLayerId].data;
