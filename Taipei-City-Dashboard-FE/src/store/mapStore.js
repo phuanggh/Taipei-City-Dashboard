@@ -737,6 +737,17 @@ export const useMapStore = defineStore("map", {
 				? hexToRGB(paint["scatter-color"])
 				: { r: "ff", g: "ff", b: "ff" };
 
+			const colors = [
+				"#2F8AB1",
+				"#60819C",
+				"#569C9A",
+				"#4CB495",
+				"#9AC17C",
+				"#F5C860",
+				"#F49F36",
+				"#F65658",
+			];
+
 			const layerConfig = {
 				id: map_config.index,
 				data: data.features,
@@ -747,12 +758,26 @@ export const useMapStore = defineStore("map", {
 								(paint["scatter-height-scale"] ?? 1),
 						]
 					: (d) => d.geometry.coordinates,
-				getFillColor: [
-					parseInt(fillColor.r, 16),
-					parseInt(fillColor.g, 16),
-					parseInt(fillColor.b, 16),
-					Math.round((paint["scatter-opacity"] ?? 0.8) * 255),
-				],
+				getFillColor: (d) => {
+					if (paint["scatter-colorBy"]) {
+						const value =
+							d.properties[paint["scatter-colorBy"]] - 1;
+						const color = hexToRGB(colors[value % colors.length]);
+
+						return [
+							parseInt(color.r, 16),
+							parseInt(color.g, 16),
+							parseInt(color.b, 16),
+							255 * paint["scatter-opacity"] || 255 * 0.5,
+						];
+					}
+					return [
+						parseInt(fillColor.r, 16),
+						parseInt(fillColor.g, 16),
+						parseInt(fillColor.b, 16),
+						Math.round((paint["scatter-opacity"] ?? 0.8) * 255),
+					];
+				},
 				getRadius: paint["scatter-radius"] ?? 100,
 				radiusMinPixels: paint["scatter-radius-min-pixels"] ?? 3,
 				radiusMaxPixels: paint["scatter-radius-max-pixels"] ?? 30,
@@ -799,14 +824,14 @@ export const useMapStore = defineStore("map", {
 				? paintSettings["arc-color"]
 				: ["#ffffff"];
 			const colors = [
-				"#F65658",
-				"#F49F36",
-				"#F5C860",
-				"#9AC17C",
-				"#4CB495",
-				"#569C9A",
-				"#60819C",
 				"#2F8AB1",
+				"#60819C",
+				"#569C9A",
+				"#4CB495",
+				"#9AC17C",
+				"#F5C860",
+				"#F49F36",
+				"#F65658",
 			];
 
 			// formatted data
@@ -909,6 +934,7 @@ export const useMapStore = defineStore("map", {
 							coef: this.step / 1000,
 						});
 					case "ScatterplotLayer":
+						console.log(l.config);
 						return new ScatterplotLayer(l.config);
 					default:
 						break;
